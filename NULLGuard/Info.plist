@@ -33,7 +33,7 @@
 		<key>com.apple.kpi.unsupported</key>
 		<string>14.0</string>
 		<key>com.apple.kpi.iokit</key>
-		<string>14.4</string>
+		<string>14.0</string>
 	</dict>
 </dict>
 </plist>
