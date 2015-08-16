@@ -46,7 +46,7 @@ int nullguard_execve(kauth_cred_t cred, kauth_cred_t new, struct proc* p, struct
     if (mh->magic == MH_MAGIC) {
         // only 32 bit processes can lack PAGEZERO when uid != 0
         struct load_command *loadCmd = (struct load_command*) (mh + 1);
-        for (uint32_t i=0; i < mh->ncmds; i++) {
+        for (uint32_t i=0; i < mh->ncmds && ((uint64_t)loadCmd) - ((uint64_t)mh) < PAGE_SIZE_64*4; i++) {
             if (loadCmd->cmd == LC_SEGMENT) {
                     struct segment_command* segment = (struct segment_command*)loadCmd;
                 if (segment->vmaddr == 0 && segment->vmsize != 0 && segment->initprot == 0 && segment->maxprot == 0 && strcmp("__PAGEZERO", segment->segname) == 0) {
