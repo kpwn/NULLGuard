@@ -42,8 +42,7 @@ kern_return_t NULLGuard_stop(kmod_info_t *ki, void *d);
 static int c = 0;
 int nullguard_execve(kauth_cred_t cred, kauth_cred_t new, struct proc* p, struct vnode* vp) {
     struct mach_header* mh = _MALLOC(PAGE_SIZE_64*4, M_TEMP, M_ZERO);
-    get_mach_header(mh, vp);
-    if (mh->magic == MH_MAGIC) {
+    if (get_mach_header(mh, vp) == KERN_SUCCESS && mh->magic == MH_MAGIC) {
         // only 32 bit processes can lack PAGEZERO when uid != 0
         struct load_command *loadCmd = (struct load_command*) (mh + 1);
         for (uint32_t i=0; i < mh->ncmds && ((uint64_t)loadCmd) - ((uint64_t)mh) < PAGE_SIZE_64*4; i++) {
