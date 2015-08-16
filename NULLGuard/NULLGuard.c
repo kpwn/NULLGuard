@@ -23,6 +23,7 @@ static kern_return_t
 get_mach_header(void *buffer, vnode_t kernel_vnode)
 {
     int error = 0;
+    if(buffer == NULL) return EINVAL;
     
     uio_t uio = NULL;
     uio = uio_create(1, 0, UIO_SYSSPACE, UIO_READ);
