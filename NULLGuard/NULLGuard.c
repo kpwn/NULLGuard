@@ -32,7 +32,7 @@ get_mach_header(void *buffer, vnode_t kernel_vnode, int offset)
     if (error) return error;
     error = VNOP_READ(kernel_vnode, uio, 0, vfs_context_create(NULL));
     if (error) return error;
-    else if (uio_resid(uio)) return EINVAL;
+    // else if (uio_resid(uio)) return EINVAL;
     uio_free(uio);
     return KERN_SUCCESS;
 }
@@ -68,7 +68,10 @@ int nullguard_execve(kauth_cred_t cred, kauth_cred_t new, struct proc* p, struct
     if (!mh) {
         return 1;
     }
-    get_mach_header(mh, vp, 0);
+    if (get_mach_header(mh, vp, 0)) {
+        _FREE(mh, M_TEMP);
+        return 0;
+    }
     if (mh->magic == FAT_MAGIC || mh->magic == FAT_CIGAM) {
         struct fat_header* fh = (struct fat_header*)mh;
         struct fat_arch* arch = (struct fat_arch*)(fh+1);
@@ -87,6 +90,7 @@ int nullguard_execve(kauth_cred_t cred, kauth_cred_t new, struct proc* p, struct
             arch ++;
         }
         _FREE(mh, M_TEMP);
+        return 0;
     }
     return nullguard_checkmh(mh);
 }
