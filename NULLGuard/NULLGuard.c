@@ -33,14 +33,13 @@ get_mach_header(void *buffer, vnode_t kernel_vnode, int offset)
     error = VNOP_READ(kernel_vnode, uio, 0, vfs_context_create(NULL));
     if (error) return error;
     else if (uio_resid(uio)) return EINVAL;
-    
+    uio_free(uio);
     return KERN_SUCCESS;
 }
 
 extern void IOLog(char* fmt, ...);
 kern_return_t NULLGuard_start(kmod_info_t * ki, void *d);
 kern_return_t NULLGuard_stop(kmod_info_t *ki, void *d);
-static int c = 0;
 
 int nullguard_checkmh(struct mach_header* mh) {
     if (mh->magic == MH_MAGIC) {
@@ -75,17 +74,21 @@ int nullguard_execve(kauth_cred_t cred, kauth_cred_t new, struct proc* p, struct
         struct fat_arch* arch = (struct fat_arch*)(fh+1);
         for (int i = 0; i < fh->nfat_arch && i * sizeof(struct fat_arch) < PAGE_SIZE*4; i++) {
             struct mach_header* mha = _MALLOC(PAGE_SIZE_64*4, M_TEMP, M_ZERO);
+            if (!mha) {
+                _FREE(mh, M_TEMP);
+                return 1;
+            }
             get_mach_header(mha, vp, arch->offset);
             
             if (nullguard_checkmh(mha)) {
+                _FREE(mh, M_TEMP);
                 return 1;
             }
             arch ++;
         }
         _FREE(mh, M_TEMP);
-    } else return nullguard_checkmh(mh);
-    c = 0;
-    return 0;
+    }
+    return nullguard_checkmh(mh);
 }
 
 static struct mac_policy_ops ops = {
